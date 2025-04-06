@@ -1,1 +1,2 @@
-# ElderUgaChATBoT
+# Gnosis
+Gnosis
