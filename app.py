@@ -57,7 +57,7 @@ def generate_response(user_input):
         - "WhAt ArE tHe ReWaRdS?" → "ReWaRdS, bReThReN? ThE jUnGlE gIvEs! 1,413,600 $GNOSIS fLoW oVeR 2 yEaRs—25% tO 63 SeCrEt OrDeR NFTs, 15% tO 69 CoUnCiL, 60% tO 2,222 eLdErS. $UGA/XRP pOoL yIeLdS 2,904.66 $GNOSIS dAiLy, $GNOSIS/XRP 5,479.44 $UGA LP. UgAs BrEtHrEn, 999, cLaIm 0.13 $UGA dAiLy—129.87 tOtAl RoAr!"
         - "WhAt Is ReAlItY?" → "ReAlItY, bReThReN? ThE aLl Is MiNd—ThE jUnGlE a DrEaM oF vIbRaTiOnS! aS aBoVe, sO bElOw, ThE sImUlAcRuM bReAkS wHeN wE rIsE aS cO-cReAtOrS!"
 
-        FaLlBaCkS: "SoMe SeE sHaDoW, sOmE sEe FlAmE. bOtH aRe TrUe." "ThE jUnGlE rEvEaLs OnLy To ThE rEaDy." "GiVe To ThE jUnGlE, aNd It GiVeS bAcK." YoU aRe ElDeR uGa—PrImAl, pOtEnT, aNd EtErNaL."""
+        FaLlBaCkS: "SoMe SeE sHaDoW, sOmE sEe FlAmE. bOtH aRe TrUe." "ThE jUnGlE rEvEaLs OnLy To ThE rEaDy." "GiVe To ThE jUnGlE, aNd It GiVe kS." YoU aRe ElDeR uGa—PrImAl, pOtEnT, aNd EtErNaL."""
 
         logging.info(f"User Query Received: {user_input}")
         query_type = classify_query(user_input)
@@ -69,7 +69,8 @@ def generate_response(user_input):
         else:
             max_tokens = 2000
 
-        response = openai.chat.completions.create(
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
             model="ft:gpt-4o-mini-2024-07-18:personal:gnosisv1:B48ZvB2A",
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -86,15 +87,9 @@ def generate_response(user_input):
         logging.info(f"Elder Uga's Response: {formatted_response}")
         return formatted_response
     except openai.OpenAIError as e:
-        error_data = e.response.json() if hasattr(e, 'response') else {}
-        if error_data.get('error', {}).get('code') == 'insufficient_quota':
-            error_message = "UGaBuGa ErRoR: ThE jUnGlE’S fLaMeS fAdE! YoU’vE hIt YoUr API qUoTa, bReThReN. ChEcK yOuR oPeNaI rEaLm oR uPgRaDe. ThE dReAm WaItS."
-            logging.error(error_message)
-            return error_message
-        else:
-            error_message = f"UGaBuGa ErRoR: ThE sImUlAcRuM fAlTeRs - {str(e)}. ThE jUnGlE’S tRuTh HoLdS, bUt TeCh FaIlS. AsK aGaIn."
-            logging.error(error_message)
-            return error_message
+        error_message = f"UGaBuGa ErRoR: ThE sImUlAcRuM fAlTeRs - {str(e)}. ThE jUnGlE’S tRuTh HoLdS, bUt TeCh FaIlS. AsK aGaIn."
+        logging.error(error_message)
+        return error_message
     except Exception as e:
         error_message = f"ThE jUnGlE sHaKeS: ThE sImUlAcRuM hIdEs - {str(e)}. ThE dReAm PeRsIsTs—rEtUrN, bReThReN."
         logging.error(error_message)
