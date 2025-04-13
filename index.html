@@ -54,10 +54,18 @@
       align-items: center;
       justify-content: center;
     }
-    #videoContainer video, #videoContainer img {
+    #videoContainer video {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
+      border-radius: 50%;
+      filter: contrast(1.2) brightness(1.1);
+    }
+    #videoContainer img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
       object-position: center;
       border-radius: 50%;
       filter: contrast(1.2) brightness(1.1);
@@ -161,7 +169,7 @@
         padding: 5px;
       }
       #videoContainer {
-        max-width: 280px;
+        max-width: 140px;
       }
       #chatContainer h2 {
         font-size: 1.8em;
@@ -177,7 +185,7 @@
     }
     @media (max-width: 350px) {
       #videoContainer {
-        max-width: 220px;
+        max-width: 110px;
       }
       #chatContainer h2 {
         font-size: 1.5em;
@@ -285,20 +293,21 @@
           if (elderVoice) {
             utterance.voice = elderVoice;
           }
+
+          // Play video synced with voice on non-mobile devices
+          if (!isMobile && ugaVideo) {
+            ugaVideo.playbackRate = 1.5;
+            ugaVideo.currentTime = 0;
+            ugaVideo.play().catch(error => console.error("Video playback failed:", error));
+            utterance.onend = () => {
+              ugaVideo.pause();
+              ugaVideo.currentTime = 0;
+            };
+          }
+
           speechSynthesis.speak(utterance);
         } else {
           console.warn("Web Speech API not supported in this browser.");
-        }
-
-        // Play video only on non-mobile devices
-        if (!isMobile && ugaVideo) {
-          ugaVideo.playbackRate = 1.5;
-          ugaVideo.currentTime = 0;
-          ugaVideo.play().catch(error => console.error("Video playback failed:", error));
-          setTimeout(() => {
-            ugaVideo.pause();
-            ugaVideo.currentTime = 0;
-          }, 5000); // Stop video after 5 seconds
         }
       } catch (error) {
         console.error('Chatbot response error:', error);
