@@ -99,7 +99,7 @@
       text-align: left;
       color: #000000;
     }
-    input, button, select {
+    input, button {
       padding: 12px;
       font-size: 1em;
       width: 90%;
@@ -123,12 +123,6 @@
       text-transform: uppercase;
       text-align: center;
     }
-    select {
-      background: rgba(0, 20, 40, 0.8);
-      color: #ffffff;
-      border: 1px solid rgba(0, 255, 255, 0.5);
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-    }
     button {
       background: linear-gradient(90deg, #00ffcc, #00b7ff);
       color: #000;
@@ -151,7 +145,7 @@
       50% { opacity: 0.5; }
       100% { opacity: 1; }
     }
-    #videoContainer, button, select {
+    #videoContainer, button {
       animation: pulse 3s infinite ease-in-out;
     }
     @media (max-width: 500px) {
@@ -183,9 +177,6 @@
     <div id="chatContainer">
       <h2>GNOSIS-AI</h2>
       <div id="chatbox"></div>
-      <select id="voiceSelect">
-        <option value="">Select Elder Uga's Voice</option>
-      </select>
       <input id="userInput" type="text" placeholder="BrEaK ThE SiMuLaCrUm, AsK yOuR qUeStIoN">
       <button id="sendButton">Send</button>
     </div>
@@ -195,24 +186,29 @@
     const inputField = document.getElementById("userInput");
     const sendButton = document.getElementById("sendButton");
     const chatbox = document.getElementById("chatbox");
-    const voiceSelect = document.getElementById("voiceSelect");
-    let voices = [];
 
-    // Populate voice dropdown
-    function loadVoices() {
-      voices = speechSynthesis.getVoices();
-      voiceSelect.innerHTML = '<option value="">Select Elder Uga\'s Voice</option>';
-      voices.forEach((voice, index) => {
-        const option = document.createElement("option");
-        option.value = index;
-        option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? "[Default]" : ""}`;
-        voiceSelect.appendChild(option);
-      });
+    // Function to get the best elderish voice
+    function getElderVoice() {
+      const voices = speechSynthesis.getVoices();
+      // Prioritize male voices in en-GB or en-US for an elderish tone
+      const preferredVoices = voices.filter(voice => 
+        (voice.lang === "en-GB" || voice.lang === "en-US") &&
+        (voice.name.toLowerCase().includes("male") || 
+         voice.name.includes("Daniel") || 
+         voice.name.includes("David") || 
+         voice.name.includes("Mark"))
+      );
+      // Return the first preferred voice, or the default voice, or any voice
+      return preferredVoices[0] || voices.find(voice => voice.default) || voices[0] || null;
     }
 
-    // Load voices when available
-    speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices(); // Initial load in case voices are already available
+    // Ensure voices are loaded before using
+    let voicesLoaded = false;
+    speechSynthesis.onvoiceschanged = () => {
+      voicesLoaded = true;
+    };
+    // Trigger initial voice load
+    speechSynthesis.getVoices();
 
     sendButton.addEventListener("click", sendMessage);
     inputField.addEventListener("keydown", function(e) {
@@ -241,14 +237,19 @@
         chatbox.scrollTop = chatbox.scrollHeight;
 
         // Play response with Web Speech API
-        const utterance = new SpeechSynthesisUtterance(data.reply);
-        utterance.pitch = 0.8; // Lower pitch for a deeper, elderish tone
-        utterance.rate = 0.7; // Slower rate for a wise, deliberate feel
-        const selectedVoiceIndex = voiceSelect.value;
-        if (selectedVoiceIndex !== "" && voices[selectedVoiceIndex]) {
-          utterance.voice = voices[selectedVoiceIndex];
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(data.reply);
+          utterance.pitch = 0.8; // Lower for a deeper, elderish tone
+          utterance.rate = 0.7; // Slower for a wise, deliberate feel
+          utterance.volume = 1.0;
+          const elderVoice = getElderVoice();
+          if (elderVoice) {
+            utterance.voice = elderVoice;
+          }
+          speechSynthesis.speak(utterance);
+        } else {
+          console.warn("Web Speech API not supported in this browser.");
         }
-        speechSynthesis.speak(utterance);
 
         const video = document.getElementById("ugaVideo");
         video.playbackRate = 1.5;
