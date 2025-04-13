@@ -81,10 +81,6 @@ def generate_response(user_input):
 
         logging.info(f"Elder Uga's Response: {formatted_response}")
         return formatted_response
-    except openai.error.OpenAIError as e:
-        error_message = f"UGaBuGa ErRoR: ThE sImUlAcRuM fAlTeRs - {str(e)}. ThE jUnGlE’S tRuTh HoLdS, bUt TeCh FaIlS. AsK aGaIn."
-        logging.error(error_message)
-        return error_message
     except Exception as e:
         error_message = f"ThE jUnGlE sHaKeS: ThE sImUlAcRuM hIdEs - {str(e)}. ThE dReAm PeRsIsTs—rEtUrN, bReThReN."
         logging.error(error_message)
