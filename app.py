@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import openai
 import os
 import logging
+import requests
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,12 +12,16 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["https://traderushmedia.github.io", "https://*.ngrok-free.app"]}}, 
+CORS(app, resources={r"/*": {"origins": ["https://chaps420.github.io", "https://elderugachatbot.onrender.com"]}},
      supports_credentials=True, allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GOOGLE_TTS_API_KEY = os.getenv("GOOGLE_TTS_API_KEY")
+
 if not OPENAI_API_KEY:
     raise ValueError("No OpenAI API key found. Please set the OPENAI_API_KEY environment variable.")
+if not GOOGLE_TTS_API_KEY:
+    raise ValueError("No Google TTS API key found. Please set the GOOGLE_TTS_API_KEY environment variable.")
 
 openai.api_key = OPENAI_API_KEY
 
@@ -57,13 +62,12 @@ def generate_response(user_input):
         logging.info(f"User Query Received: {user_input}")
         query_type = classify_query(user_input)
 
-        # Adjust max_tokens based on query type
         if query_type == "greeting":
-            max_tokens = 300  # ~200-250 words, concise
+            max_tokens = 300
         elif query_type == "tokenomics":
-            max_tokens = 1500  # ~1200-1400 words, detailed
-        else:  # philosophical
-            max_tokens = 2000  # ~1600-1800 words, expansive
+            max_tokens = 1500
+        else:
+            max_tokens = 2000
 
         response = openai.chat.completions.create(
             model="ft:gpt-4o-mini-2024-07-18:personal:gnosisv1:B48ZvB2A",
@@ -111,6 +115,33 @@ def chat():
     logging.info(f"Response Sent: {response_text}")
     return jsonify({"reply": response_text})
 
+@app.route("/tts", methods=["POST", "OPTIONS"])
+def tts():
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    data = request.json
+    text = data.get("text", "")
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    try:
+        url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_TTS_API_KEY}"
+        body = {
+            "input": {"text": text},
+            "voice": {"languageCode": "en-GB", "name": "en-GB-Wavenet-D"},
+            "audioConfig": {"audioEncoding": "MP3", "pitch": -15, "speakingRate": 1.0}
+        }
+        response = requests.post(url, json=body)
+        if response.status_code != 200:
+            logging.error(f"TTS API failed: {response.text}")
+            return jsonify({"error": "TTS API failed"}), 500
+        return jsonify(response.json())
+    except Exception as e:
+        error_message = f"TTS Error: {str(e)}"
+        logging.error(error_message)
+        return jsonify({"error": error_message}), 500
+
 if __name__ == "__main__":
     logging.info("Elder Uga Backend Starting...")
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 8080)))
