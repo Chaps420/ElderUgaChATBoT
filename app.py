@@ -3,7 +3,6 @@ from flask_cors import CORS
 import openai
 import os
 import logging
-import requests
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,12 +15,9 @@ CORS(app, resources={r"/*": {"origins": ["https://chaps420.github.io", "https://
      supports_credentials=True, allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GOOGLE_TTS_API_KEY = os.getenv("GOOGLE_TTS_API_KEY")
 
 if not OPENAI_API_KEY:
     raise ValueError("No OpenAI API key found. Please set the OPENAI_API_KEY environment variable.")
-if not GOOGLE_TTS_API_KEY:
-    raise ValueError("No Google TTS API key found. Please set the GOOGLE_TTS_API_KEY environment variable.")
 
 openai.api_key = OPENAI_API_KEY
 
@@ -57,7 +53,7 @@ def generate_response(user_input):
         - "WhAt ArE tHe ReWaRdS?" → "ReWaRdS, bReThReN? ThE jUnGlE gIvEs! 1,413,600 $GNOSIS fLoW oVeR 2 yEaRs—25% tO 63 SeCrEt OrDeR NFTs, 15% tO 69 CoUnCiL, 60% tO 2,222 eLdErS. $UGA/XRP pOoL yIeLdS 2,904.66 $GNOSIS dAiLy, $GNOSIS/XRP 5,479.44 $UGA LP. UgAs BrEtHrEn, 999, cLaIm 0.13 $UGA dAiLy—129.87 tOtAl RoAr!"
         - "WhAt Is ReAlItY?" → "ReAlItY, bReThReN? ThE aLl Is MiNd—ThE jUnGlE a DrEaM oF vIbRaTiOnS! aS aBoVe, sO bElOw, ThE sImUlAcRuM bReAkS wHeN wE rIsE aS cO-cReAtOrS!"
 
-        FaLlBaCkS: "SoMe SeE sHaDoW, sOmE sEe FlAmE. bOtH aRe TrUe." "ThE jUnGlE rEvEaLs OnLy To ThE rEaDy." "GiVe To ThE jUnGlE, aNd It GiVe kS." YoU aRe ElDeR uGa—PrImAl, pOtEnT, aNd EtErNaL."""
+        FaLlBaCkS: "SoMe SeE sHaDoW, sOmE sEe FlAmE. bOtH aRe TrUe." "ThE jUnGlE rEvEaLs OnLy To ThE rEaDy." "GiVe To ThE jUnGlE, aNd It GiVeS bAcK." YoU aRe ElDeR uGa—PrImAl, pOtEnT, aNd EtErNaL."""
 
         logging.info(f"User Query Received: {user_input}")
         query_type = classify_query(user_input)
@@ -69,8 +65,7 @@ def generate_response(user_input):
         else:
             max_tokens = 2000
 
-        client = openai.OpenAI(api_key=OPENAI_API_KEY)
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="ft:gpt-4o-mini-2024-07-18:personal:gnosisv1:B48ZvB2A",
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -81,12 +76,12 @@ def generate_response(user_input):
             top_p=0.9
         )
 
-        raw_response = response.choices[0].message.content.strip()
+        raw_response = response.choices[0].message['content'].strip()
         formatted_response = ''.join([char.upper() if i % 2 == 0 else char.lower() for i, char in enumerate(raw_response)])
 
         logging.info(f"Elder Uga's Response: {formatted_response}")
         return formatted_response
-    except openai.OpenAIError as e:
+    except openai.error.OpenAIError as e:
         error_message = f"UGaBuGa ErRoR: ThE sImUlAcRuM fAlTeRs - {str(e)}. ThE jUnGlE’S tRuTh HoLdS, bUt TeCh FaIlS. AsK aGaIn."
         logging.error(error_message)
         return error_message
@@ -109,33 +104,6 @@ def chat():
     response_text = generate_response(user_message)
     logging.info(f"Response Sent: {response_text}")
     return jsonify({"reply": response_text})
-
-@app.route("/tts", methods=["POST", "OPTIONS"])
-def tts():
-    if request.method == 'OPTIONS':
-        return '', 200
-
-    data = request.json
-    text = data.get("text", "")
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
-
-    try:
-        url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_TTS_API_KEY}"
-        body = {
-            "input": {"text": text},
-            "voice": {"languageCode": "en-GB", "name": "en-GB-Wavenet-D"},
-            "audioConfig": {"audioEncoding": "MP3", "pitch": -15, "speakingRate": 1.0}
-        }
-        response = requests.post(url, json=body)
-        if response.status_code != 200:
-            logging.error(f"TTS API failed: {response.text}")
-            return jsonify({"error": "TTS API failed"}), 500
-        return jsonify(response.json())
-    except Exception as e:
-        error_message = f"TTS Error: {str(e)}"
-        logging.error(error_message)
-        return jsonify({"error": error_message}), 500
 
 if __name__ == "__main__":
     logging.info("Elder Uga Backend Starting...")
