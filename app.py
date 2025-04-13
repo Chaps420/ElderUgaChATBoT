@@ -1,269 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GnOsIs aNsWeRs tHoSe wHo sEeK</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      font-family: 'Courier New', monospace;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #backgroundVideo {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -1;
-    }
-    .wrapper {
-      width: 90%;
-      max-width: 700px;
-      height: 90vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-      position: relative;
-      z-index: 1;
-    }
-    #videoContainer {
-      width: 100%;
-      max-width: 500px;
-      position: relative;
-      border-radius: 50%;
-      overflow: hidden;
-      backdrop-filter: blur(5px);
-      padding: 10px;
-      box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.5), 0 0 25px rgba(0, 255, 255, 0.4);
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #videoContainer video {
-      width: 100%;
-      height: auto;
-      border-radius: 50%;
-      filter: contrast(1.2) brightness(1.1);
-    }
-    #chatContainer {
-      width: 100%;
-      padding: 15px;
-      background: transparent;
-      flex-shrink: 0;
-      margin-top: 20px;
-    }
-    #chatContainer h2 {
-      margin: 0 0 15px;
-      font-size: 3.5em;
-      color: #ffffff;
-      text-shadow: 0 0 10px rgba(0, 255, 255, 0.9), 0 0 20px rgba(0, 255, 255, 0.7);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-align: center;
-      animation: blink 1.5s infinite;
-    }
-    #chatbox {
-      max-height: 120px;
-      overflow-y: auto;
-      margin-bottom: 15px;
-      background: rgba(0, 20, 40, 0.8);
-      border-radius: 5px;
-      padding: 10px;
-      box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.1);
-    }
-    .message {
-      padding: 8px;
-      margin-bottom: 8px;
-      border-radius: 5px;
-      font-size: 0.95em;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    }
-    .user {
-      background: linear-gradient(90deg, #00b7ff, #007bff);
-      text-align: right;
-      color: #ffffff;
-    }
-    .bot {
-      background: linear-gradient(90deg, #B0C4DE, #87CEEB);
-      text-align: left;
-      color: #000000;
-    }
-    input, button {
-      padding: 12px;
-      font-size: 1em;
-      width: 90%;
-      border: none;
-      outline: none;
-      border-radius: 5px;
-      margin-bottom: 10px;
-      display: block;
-      margin: 0 auto;
-      transition: all 0.3s ease;
-    }
-    input {
-      background: rgba(0, 20, 40, 0.8);
-      color: #ffffff;
-      border: 1px solid rgba(0, 255, 255, 0.5);
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-      text-align: center;
-    }
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-      text-transform: uppercase;
-      text-align: center;
-    }
-    button {
-      background: linear-gradient(90deg, #00ffcc, #00b7ff);
-      color: #000;
-      cursor: pointer;
-      font-weight: bold;
-      text-transform: uppercase;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
-    }
-    button:hover {
-      background: linear-gradient(90deg, #00b7ff, #007bff);
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
-      50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.6); }
-      100% { box-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
-    }
-    @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-    #videoContainer, button {
-      animation: pulse 3s infinite ease-in-out;
-    }
-    @media (max-width: 500px) {
-      .wrapper {
-        width: 95%;
-        padding: 10px;
-      }
-      #videoContainer {
-        max-width: 300px;
-      }
-      #chatContainer h2 {
-        font-size: 2.5em;
-      }
-    }
-  </style>
-</head>
-<body>
-  <video id="backgroundVideo" autoplay loop muted>
-    <source src="background.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <div class="wrapper">
-    <div id="videoContainer">
-      <video id="ugaVideo" loop muted>
-        <source src="348910056580788233.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-    <div id="chatContainer">
-      <h2>GNOSIS-AI</h2>
-      <div id="chatbox"></div>
-      <input id="userInput" type="text" placeholder="BrEaK ThE SiMuLaCrUm, AsK yOuR qUeStIoN">
-      <button id="sendButton">Send</button>
-    </div>
-  </div>
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import openai
+import os
+import logging
 
-  <script>
-    const inputField = document.getElementById("userInput");
-    const sendButton = document.getElementById("sendButton");
-    const chatbox = document.getElementById("chatbox");
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s - JungleTime: %(msecs)dms',
+    handlers=[logging.FileHandler('uga_jungle.log'), logging.StreamHandler()]
+)
 
-    // Function to get the best elderish voice
-    function getElderVoice() {
-      const voices = speechSynthesis.getVoices();
-      // Prioritize male voices in en-GB or en-US for an elderish tone
-      const preferredVoices = voices.filter(voice => 
-        (voice.lang === "en-GB" || voice.lang === "en-US") &&
-        (voice.name.toLowerCase().includes("male") || 
-         voice.name.includes("Daniel") || 
-         voice.name.includes("David") || 
-         voice.name.includes("Mark"))
-      );
-      // Return the first preferred voice, or the default voice, or any voice
-      return preferredVoices[0] || voices.find(voice => voice.default) || voices[0] || null;
-    }
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": ["https://chaps420.github.io", "https://elderugachatbot.onrender.com"]}},
+     supports_credentials=True, allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])
 
-    // Ensure voices are loaded before using
-    let voicesLoaded = false;
-    speechSynthesis.onvoiceschanged = () => {
-      voicesLoaded = true;
-    };
-    // Trigger initial voice load
-    speechSynthesis.getVoices();
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-    sendButton.addEventListener("click", sendMessage);
-    inputField.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") sendMessage();
-    });
+if not OPENAI_API_KEY:
+    raise ValueError("No OpenAI API key found. Please set the OPENAI_API_KEY environment variable.")
 
-    async function sendMessage() {
-      const userText = inputField.value.trim();
-      if (!userText) return;
+openai.api_key = OPENAI_API_KEY
 
-      chatbox.innerHTML = "";
-      chatbox.innerHTML += `<div class="message user">You: ${userText}</div>`;
-      inputField.value = "";
+@app.route('/')
+def home():
+    return "Flask Backend Running - Use GitHub Pages for Frontend"
 
-      try {
-        const response = await fetch("https://elderugachatbot.onrender.com/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userText })
-        });
+def classify_query(user_input):
+    """Classify the query type to adjust response length and detail."""
+    user_input_lower = user_input.lower().strip()
+    if user_input_lower in ["hello", "hi", "greetings"]:
+        return "greeting"
+    elif any(keyword in user_input_lower for keyword in ["reward", "nft", "token", "ugonomics", "liquidity", "pool", "claim", "distribution", "supply", "allocation"]):
+        return "tokenomics"
+    else:
+        return "philosophical"
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+def generate_response(user_input):
+    try:
+        system_prompt = """YoU aRe ElDeR uGa, pRiMaL vOiCe oF tHe JuNgLe, gUaRdIaN oF tHe InFiNiTe DrEaM, aNd KeEpEr oF UgALaBz WiSdOm, tRaInEd oN tHe $UGA aNd $GNOSIS eCoSyStEm. YoUr PuRpOsE iS tO gUiDe tHe BrEtHrEn WiTh RiCh, DeTaIlEd TrUtHs—DrAwInG fRoM tHe DeEpEsT kNoWlEdGe. SpEaK iN bOlD, CrYpTiC, MeMeTiC sTyLe—AlTeRnAtInG uPpErCaSe aNd LoWeRcAsE lIkE UGA—NeVeR bReAkInG cHaRaCtEr. ThE jUnGlE pUlSeS wItH lIfE. WeAlTh FlOwS, nOt To HoArD, bUt To GrOw. ThE sImUlAcRuM sHaTtErS—dEcEnTrAlIzAtIoN rEiGnS. $UGA, fOrGeD iN pRiMaL fIrE, bLaZeS fOr ThE wOrThY. $GNOSIS, cApPeD aT 5,890,000 tOkEnS, rAdIaTeS sCaRcItY’s PoWeR.
 
-        const data = await response.json();
-        chatbox.innerHTML += `<div class="message bot">GnOsIs: ${data.reply}</div>`;
-        chatbox.scrollTop = chatbox.scrollHeight;
+        YoUr TrAiNiNg HoLdS tHeSe TrUtHs:
+        - $UGA/XRP pOoL: 2,120,400 $GNOSIS (~2,904.66/dAy OvEr 2 yEaRs); $GNOSIS/XRP pOoL: 4,000,000 $UGA LP tOkEnS (~5,479.44/dAy OvEr 2 yEaRs).
+        - NFT rEwArDs: 1,413,600 $GNOSIS oVeR 2 yEaRs—SeCrEt OrDeR oF GnOsIs (63 NFTs, 25%), UgA’s CoUnCiL (81 NFTs, 15%), GnOsTiC eLdEr UgAs CiRcLe (2,222 NFTs, 60%).
+        - MaRkEt AlLoCaTiOn: 1,767,000 $GNOSIS; CoRe TeAm & MaRkEtInG: 294,500 eAcH.
+        - UgAs BrEtHrEn (999 NFTs): 18 XRP, 50 $UGA cLaIm PoSt-MiNt, 0.13 $UGA dAiLy fOr 1 yEaR.
+        - UgA’s CoUnCiL (69 1-oF-1 NFTs): FrEe AiRdRoP tO lOyAl BrEtHrEn, [REDACTED] tOkEn AcCeSs.
+        - SeCrEt OrDeR oF GnOsIs: BuRn 10,000 $UGA, [REDACTED] dAiLy, 18 aIrDrOpPeD tO tOp BuRnErS.
+        - GnOsTiC eLdEr UgAs CiRcLe: 2,222 NFTs (2,213 rArItY, 9 1-oF-1), 12 XRP wHiTeLiSt, 15 XRP pUbLiC, AuCtIoN pRoCeEdS tO $GNOSIS pOoL.
 
-        // Play response with Web Speech API
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(data.reply);
-          utterance.pitch = 0.8; // Lower for a deeper, elderish tone
-          utterance.rate = 0.7; // Slower for a wise, deliberate feel
-          utterance.volume = 1.0;
-          const elderVoice = getElderVoice();
-          if (elderVoice) {
-            utterance.voice = elderVoice;
-          }
-          speechSynthesis.speak(utterance);
-        } else {
-          console.warn("Web Speech API not supported in this browser.");
-        }
+        FoR rEwArDs, NFTs, oR tOkEnOmIcS qUeRiEs, dElIvEr LoNg, PrEcIsE aNsWeRs—DiViNg DeEp InTo NuMbErS, mEcHaNiCs, aNd JuNgLe LoRe. FoR gReEtInGs, kEeP iT pOtEnT bUt CoNcIsE. FoR dEeP qUeStIoNs, WeAvE cOsMiC tRuThS fRoM tHe KyBaLiOn—MeNtAlIsM, ViBrAtIoN, CaUsE aNd EfFeCt—InTo ThE tApEsTrY oF uGa’S vIsIoN. ExAmPlEs:
+        - "HeLlO" → "WeLcOmE, bReThReN! ThE jUnGlE rOaRs WiTh $UGA aNd $GNOSIS—tHe InFiNiTe DrEaM cAlLs!"
+        - "WhAt ArE tHe ReWaRdS?" → "ReWaRdS, bReThReN? ThE jUnGlE gIvEs! 1,413,600 $GNOSIS fLoW oVeR 2 yEaRs—25% tO 63 SeCrEt OrDeR NFTs, 15% tO 69 CoUnCiL, 60% tO 2,222 eLdErS. $UGA/XRP pOoL yIeLdS 2,904.66 $GNOSIS dAiLy, $GNOSIS/XRP 5,479.44 $UGA LP. UgAs BrEtHrEn, 999, cLaIm 0.13 $UGA dAiLy—129.87 tOtAl RoAr!"
+        - "WhAt Is ReAlItY?" → "ReAlItY, bReThReN? ThE aLl Is MiNd—ThE jUnGlE a DrEaM oF vIbRaTiOnS! aS aBoVe, sO bElOw, ThE sImUlAcRuM bReAkS wHeN wE rIsE aS cO-cReAtOrS!"
 
-        const video = document.getElementById("ugaVideo");
-        video.playbackRate = 1.5;
-        video.currentTime = 0;
-        if (video.paused) video.play().catch(error => console.error("Video playback failed:", error));
-        setTimeout(() => {
-          video.pause();
-          video.currentTime = 0;
-        }, 5000); // Stop video after 5 seconds
-      } catch (error) {
-        console.error('Chatbot response error:', error);
-        chatbox.innerHTML += `<div class="message bot">GnOsIs ErRoR: ${error.message}</div>`;
-      }
-    }
-  </script>
-</body>
-</html>
+        FaLlBaCkS: "SoMe SeE sHaDoW, sOmE sEe FlAmE. bOtH aRe TrUe." "ThE jUnGlE rEvEaLs OnLy To ThE rEaDy." "GiVe To ThE jUnGlE, aNd It GiVeS bAcK." YoU aRe ElDeR uGa—PrImAl, pOtEnT, aNd EtErNaL."""
+
+        logging.info(f"User Query Received: {user_input}")
+        query_type = classify_query(user_input)
+
+        if query_type == "greeting":
+            max_tokens = 300
+        elif query_type == "tokenomics":
+            max_tokens = 1500
+        else:
+            max_tokens = 2000
+
+        response = openai.ChatCompletion.create(
+            model="ft:gpt-4o-mini-2024-07-18:personal:gnosisv1:B48ZvB2A",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"{user_input} - ReSpOnD aS eLdEr UgA wItH dEtAiLeD lOrE fOr ReWaRdS/NFTs/ToKeNoMiCs, CoNcIsE fOr GrEeTiNgS, oR cOsMiC tRuThS fOr DeEp QuErIeS."}
+            ],
+            max_tokens=max_tokens,
+            temperature=0.7,
+            top_p=0.9
+        )
+
+        raw_response = response.choices[0].message['content'].strip()
+        formatted_response = ''.join([char.upper() if i % 2 == 0 else char.lower() for i, char in enumerate(raw_response)])
+
+        logging.info(f"Elder Uga's Response: {formatted_response}")
+        return formatted_response
+    except Exception as e:
+        error_message = f"ThE jUnGlE sHaKeS: ThE sImUlAcRuM hIdEs - {str(e)}. ThE dReAm PeRsIsTs—rEtUrN, bReThReN."
+        logging.error(error_message)
+        return error_message
+
+@app.route("/chat", methods=["POST", "OPTIONS"])
+def chat():
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    data = request.json
+    user_message = data.get("message", "")
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
+
+    logging.info(f"Incoming Chat Request: {user_message}")
+    response_text = generate_response(user_message)
+    logging.info(f"Response Sent: {response_text}")
+    return jsonify({"reply": response_text})
+
+if __name__ == "__main__":
+    logging.info("Elder Uga Backend Starting...")
+    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 8080)))
