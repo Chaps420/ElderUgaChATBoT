@@ -95,9 +95,9 @@
       color: #ffffff;
     }
     .bot {
-      background: linear-gradient(90deg, #B0C4DE, #87CEEB); /* Light blue-silver gradient */
+      background: linear-gradient(90deg, #B0C4DE, #87CEEB);
       text-align: left;
-      color: #000000; /* Changed from white to black */
+      color: #000000;
     }
     input, button {
       padding: 12px;
@@ -185,35 +185,35 @@
   <script>
     const inputField = document.getElementById("userInput");
     const sendButton = document.getElementById("sendButton");
-    
+    const chatbox = document.getElementById("chatbox");
+
     sendButton.addEventListener("click", sendMessage);
     inputField.addEventListener("keydown", function(e) {
       if (e.key === "Enter") sendMessage();
     });
-    
+
     async function sendMessage() {
       const userText = inputField.value.trim();
       if (!userText) return;
-      
-      const chatbox = document.getElementById("chatbox");
+
       chatbox.innerHTML = "";
       chatbox.innerHTML += `<div class="message user">You: ${userText}</div>`;
       inputField.value = "";
-      
+
       try {
-        const response = await fetch("https://7843-2600-1007-a011-2d61-e4c0-e5c3-e8e5-347.ngrok-free.app/chat", {
+        const response = await fetch("https://elderugachatbot.onrender.com/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: userText })
         });
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const data = await response.json();
         chatbox.innerHTML += `<div class="message bot">GnOsIs: ${data.reply}</div>`;
         chatbox.scrollTop = chatbox.scrollHeight;
-        
-        playWiseElderVoice(data.reply);
+
+        await playWiseElderVoice(data.reply);
       } catch (error) {
         console.error('Chatbot response error:', error);
         chatbox.innerHTML += `<div class="message bot">GnOsIs ErRoR: ${error.message}</div>`;
@@ -225,56 +225,29 @@
       video.playbackRate = 1.5;
       video.currentTime = 0;
 
-      // Modify text for TTS pronunciation
       let ttsText = text
-        .replace(/\$/g, " ")           // Silence "$" by replacing with space
-        .replace(/\$UGA/g, "youga")    // "$UGA" to "youga"
-        .replace(/UGA/g, "youga");     // "UGA" to "youga"
-
-      const apiKey = "AIzaSyChFaSPFqvfvZDpuhDai9L-tSBcXBEm4DM"; // Replace with your actual Google Cloud TTS API key
-      const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-      const body = {
-        input: { text: ttsText },
-        voice: { languageCode: "en-GB", name: "en-GB-Wavenet-D" }, // WaveNet British elder
-        audioConfig: { 
-          audioEncoding: "MP3", 
-          pitch: -15,      // Deep rumble
-          speakingRate: 1.0 // Sped up a bit more—swift wisdom
-        }
-      };
+        .replace(/\$/g, " ")
+        .replace(/\$UGA/g, "youga")
+        .replace(/UGA/g, "youga");
 
       try {
-        console.log("Fetching TTS audio for:", ttsText);
-        const response = await fetch(url, {
+        const response = await fetch("https://elderugachatbot.onrender.com/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
+          body: JSON.stringify({ text: ttsText })
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("TTS fetch failed with status:", response.status, "Response:", errorText);
-          throw new Error(`TTS API failed: ${response.status} - ${errorText}`);
-        }
-
+        if (!response.ok) throw new Error(`TTS fetch failed: ${response.status}`);
         const data = await response.json();
-        console.log("TTS response:", data);
-        if (!data.audioContent) {
-          console.error("No audioContent in TTS response");
-          throw new Error("No audio content returned");
-        }
+        if (!data.audioContent) throw new Error("No audio content returned");
 
         const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
-        if (video.paused) {
-          video.play().catch(error => console.error("Video playback failed:", error));
-        }
+        if (video.paused) video.play().catch(error => console.error("Video playback failed:", error));
         audio.play();
-        console.log("Audio playing");
 
         audio.onended = () => {
           video.pause();
           video.currentTime = 0;
-          console.log("Audio and video stopped");
         };
       } catch (error) {
         console.error("TTS error:", error);
