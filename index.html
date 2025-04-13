@@ -213,45 +213,17 @@
         chatbox.innerHTML += `<div class="message bot">GnOsIs: ${data.reply}</div>`;
         chatbox.scrollTop = chatbox.scrollHeight;
 
-        await playWiseElderVoice(data.reply);
+        const video = document.getElementById("ugaVideo");
+        video.playbackRate = 1.5;
+        video.currentTime = 0;
+        if (video.paused) video.play().catch(error => console.error("Video playback failed:", error));
+        setTimeout(() => {
+          video.pause();
+          video.currentTime = 0;
+        }, 5000); // Stop video after 5 seconds
       } catch (error) {
         console.error('Chatbot response error:', error);
         chatbox.innerHTML += `<div class="message bot">GnOsIs ErRoR: ${error.message}</div>`;
-      }
-    }
-
-    async function playWiseElderVoice(text) {
-      const video = document.getElementById("ugaVideo");
-      video.playbackRate = 1.5;
-      video.currentTime = 0;
-
-      let ttsText = text
-        .replace(/\$/g, " ")
-        .replace(/\$UGA/g, "youga")
-        .replace(/UGA/g, "youga");
-
-      try {
-        const response = await fetch("https://elderugachatbot.onrender.com/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: ttsText })
-        });
-
-        if (!response.ok) throw new Error(`TTS fetch failed: ${response.status}`);
-        const data = await response.json();
-        if (!data.audioContent) throw new Error("No audio content returned");
-
-        const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
-        if (video.paused) video.play().catch(error => console.error("Video playback failed:", error));
-        audio.play();
-
-        audio.onended = () => {
-          video.pause();
-          video.currentTime = 0;
-        };
-      } catch (error) {
-        console.error("TTS error:", error);
-        chatbox.innerHTML += `<div class="message bot">VoIcE oF tHe JuNgLe FaIlS: ${error.message}</div>`;
       }
     }
   </script>
