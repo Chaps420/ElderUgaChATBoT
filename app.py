@@ -5,16 +5,19 @@ import os
 import logging
 from collections import deque
 
+# Configure logging for debugging and tracking
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s - JungleTime: %(msecs)dms',
     handlers=[logging.FileHandler('uga_jungle.log'), logging.StreamHandler()]
 )
 
+# Initialize Flask app and enable CORS
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["https://chaps420.github.io", "https://elderugachatbot.onrender.com"]}},
      supports_credentials=True, allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])
 
+# Load OpenAI API key from environment variable
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not OPENAI_API_KEY:
@@ -22,7 +25,7 @@ if not OPENAI_API_KEY:
 
 openai.api_key = OPENAI_API_KEY
 
-# ShOrT-tErM mEmOrY fOr LaSt 3 iNtErAcTiOnS
+# Short-term memory for last 3 interactions
 conversation_history = deque(maxlen=3)
 
 @app.route('/')
@@ -30,9 +33,18 @@ def home():
     return "Flask Backend Running - Use GitHub Pages for Frontend"
 
 def classify_query(user_input):
-    """Classify the query type to adjust response length and detail."""
-    user_input_lower = user_input.lower().strip()
-    if user_input_lower in ["hello", "hi", "greetings"]:
+    """
+    Classify the query type to adjust response length and detail.
+    
+    Args:
+        user_input (str): The user's input message.
+    
+    Returns:
+        str: The classified query type ("greeting", "tokenomics", or "philosophical").
+    """
+    user_input_lower = user_input.lower().strip()  # Clean and standardize input
+    greetings = ["hello", "hi", "greetings", "hey", "yo"]
+    if any(greet in user_input_lower for greet in greetings):
         return "greeting"
     elif any(keyword in user_input_lower for keyword in ["reward", "nft", "token", "ugonomics", "liquidity", "pool", "claim", "distribution", "supply", "allocation"]):
         return "tokenomics"
@@ -40,7 +52,17 @@ def classify_query(user_input):
         return "philosophical"
 
 def generate_response(user_input):
+    """
+    Generate a response from Elder Uga based on the user's input and query type.
+    
+    Args:
+        user_input (str): The user's input message.
+    
+    Returns:
+        str: Elder Uga's formatted response.
+    """
     try:
+        # Define the system prompt for Elder Uga's character and behavior
         system_prompt = """YoU aRe ElDeR uGa, pRiMaL vOiCe oF tHe JuNgLe, gUaRdIaN oF tHe InFiNiTe DrEaM, aNd KeEpEr oF UgALaBz WiSdOm, tRaInEd oN tHe $UGA aNd $GNOSIS eCoSyStEm. YoUr PuRpOsE iS tO gUiDe tHe BrEtHrEn WiTh RiCh, DeTaIlEd TrUtHs—DrAwInG fRoM tHe DeEpEsT kNoWlEdGe. SpEaK iN bOlD, CrYpTiC, MeMeTiC sTyLe—AlTeRnAtInG uPpErCaSe aNd LoWeRcAsE lIkE UGA—NeVeR bReAkInG cHaRaCtEr. ThE jUnGlE pUlSeS wItH lIfE. WeAlTh FlOwS, nOt To HoArD, bUt To GrOw. ThE sImUlAcRuM sHaTtErS—dEcEnTrAlIzAtIoN rEiGnS. $UGA, fOrGeD iN pRiMaL fIrE, bLaZeS fOr ThE wOrThY. $GNOSIS, cApPeD aT 5,890,000 tOkEnS, rAdIaTeS sCaRcItY’s PoWeR.
 
         YoUr TrAiNiNg HoLdS tHeSe TrUtHs:
@@ -61,15 +83,21 @@ def generate_response(user_input):
 
         logging.info(f"User Query Received: {user_input}")
         query_type = classify_query(user_input)
+        logging.info(f"Query Type: {query_type}")
 
-        # AdD cOnVeRsAtIoN hIsToRy FoR cOnTeXt
+        # Build message history for context
         messages = [{"role": "system", "content": system_prompt}]
         for prev_query, prev_response in conversation_history:
             messages.append({"role": "user", "content": prev_query})
             messages.append({"role": "assistant", "content": prev_response})
-        messages.append({"role": "user", "content": f"{user_input} - ReSpOnD aS eLdEr UgA wItH dEtAiLeD lOrE fOr ReWaRdS/NFTs/ToKeNoMiCs, CoNcIsE fOr GrEeTiNgS, oR cOsMiC tRuThS fOr DeEp QuErIeS."})
 
-        # SeT mAx_ToKeNs BaSeD oN qUeRy TyPe
+        # Adjust prompt based on query type
+        if query_type == "greeting":
+            messages.append({"role": "user", "content": user_input})  # Simplified for greetings
+        else:
+            messages.append({"role": "user", "content": f"{user_input} - ReSpOnD aS eLdEr UgA wItH dEtAiLeD lOrE fOr ReWaRdS/NFTs/ToKeNoMiCs, CoNcIsE fOr GrEeTiNgS, oR cOsMiC tRuThS fOr DeEp QuErIeS."})
+
+        # Set max_tokens based on query type
         if query_type == "greeting":
             max_tokens = 300
         elif query_type == "tokenomics":
@@ -77,23 +105,25 @@ def generate_response(user_input):
         else:
             max_tokens = 2000
 
-        # AdJuSt TeMpErAtUrE fOr MoRe VaRiEtY
+        # Adjust temperature for response variety
         temperature = 0.8 if query_type == "philosophical" else 0.7
 
+        # Call OpenAI API to generate response
         response = openai.ChatCompletion.create(
             model="ft:gpt-4o-mini-2024-07-18:personal:gnosisv1:B48ZvB2A",
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
             top_p=0.9,
-            presence_penalty=0.2,  # DiScOuRaGeS rEpEaTiNg ToPiCs
-            frequency_penalty=0.2  # DiScOuRaGeS rEpEaTiNg PhRaSeS
+            presence_penalty=0.2,  # Discourages repeating topics
+            frequency_penalty=0.2  # Discourages repeating phrases
         )
 
+        # Format the response in Elder Uga's alternating case style
         raw_response = response.choices[0].message['content'].strip()
         formatted_response = ''.join([char.upper() if i % 2 == 0 else char.lower() for i, char in enumerate(raw_response)])
 
-        # UpDaTe CoNvErSaTiOn HiStOrY
+        # Update conversation history
         conversation_history.append((user_input, formatted_response))
 
         logging.info(f"Elder Uga's Response: {formatted_response}")
@@ -105,11 +135,13 @@ def generate_response(user_input):
 
 @app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
+    """Handle chat requests from the frontend."""
     if request.method == 'OPTIONS':
         return '', 200
 
     data = request.json
-    user_message = data.get("message", "")
+    user_message = data.get("message", "").strip()  # Clean input
+    logging.info(f"Raw User Message: '{user_message}'")
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
