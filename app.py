@@ -3,6 +3,7 @@ from flask_cors import CORS
 import openai
 import os
 import logging
+from collections import deque
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,6 +21,9 @@ if not OPENAI_API_KEY:
     raise ValueError("No OpenAI API key found. Please set the OPENAI_API_KEY environment variable.")
 
 openai.api_key = OPENAI_API_KEY
+
+# ShOrT-tErM mEmOrY fOr LaSt 3 iNtErAcTiOnS
+conversation_history = deque(maxlen=3)
 
 @app.route('/')
 def home():
@@ -58,6 +62,14 @@ def generate_response(user_input):
         logging.info(f"User Query Received: {user_input}")
         query_type = classify_query(user_input)
 
+        # AdD cOnVeRsAtIoN hIsToRy FoR cOnTeXt
+        messages = [{"role": "system", "content": system_prompt}]
+        for prev_query, prev_response in conversation_history:
+            messages.append({"role": "user", "content": prev_query})
+            messages.append({"role": "assistant", "content": prev_response})
+        messages.append({"role": "user", "content": f"{user_input} - ReSpOnD aS eLdEr UgA wItH dEtAiLeD lOrE fOr ReWaRdS/NFTs/ToKeNoMiCs, CoNcIsE fOr GrEeTiNgS, oR cOsMiC tRuThS fOr DeEp QuErIeS."})
+
+        # SeT mAx_ToKeNs BaSeD oN qUeRy TyPe
         if query_type == "greeting":
             max_tokens = 300
         elif query_type == "tokenomics":
@@ -65,19 +77,24 @@ def generate_response(user_input):
         else:
             max_tokens = 2000
 
+        # AdJuSt TeMpErAtUrE fOr MoRe VaRiEtY
+        temperature = 0.8 if query_type == "philosophical" else 0.7
+
         response = openai.ChatCompletion.create(
             model="ft:gpt-4o-mini-2024-07-18:personal:gnosisv1:B48ZvB2A",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"{user_input} - ReSpOnD aS eLdEr UgA wItH dEtAiLeD lOrE fOr ReWaRdS/NFTs/ToKeNoMiCs, CoNcIsE fOr GrEeTiNgS, oR cOsMiC tRuThS fOr DeEp QuErIeS."}
-            ],
+            messages=messages,
             max_tokens=max_tokens,
-            temperature=0.7,
-            top_p=0.9
+            temperature=temperature,
+            top_p=0.9,
+            presence_penalty=0.2,  # DiScOuRaGeS rEpEaTiNg ToPiCs
+            frequency_penalty=0.2  # DiScOuRaGeS rEpEaTiNg PhRaSeS
         )
 
         raw_response = response.choices[0].message['content'].strip()
         formatted_response = ''.join([char.upper() if i % 2 == 0 else char.lower() for i, char in enumerate(raw_response)])
+
+        # UpDaTe CoNvErSaTiOn HiStOrY
+        conversation_history.append((user_input, formatted_response))
 
         logging.info(f"Elder Uga's Response: {formatted_response}")
         return formatted_response
